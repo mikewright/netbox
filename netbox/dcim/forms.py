@@ -2065,6 +2065,12 @@ class PowerOutletBulkEditForm(BootstrapMixin, AddRemoveTagsForm, BulkEditForm):
         queryset=PowerOutlet.objects.all(),
         widget=forms.MultipleHiddenInput()
     )
+    power_port = forms.ModelChoiceField(
+        queryset=PowerPort.objects.all(),
+        required=False,
+        widget=StaticSelect2()
+
+    )
     feed_leg = forms.ChoiceField(
         choices=add_blank_choice(POWERFEED_LEG_CHOICES),
         required=False,
@@ -2076,8 +2082,21 @@ class PowerOutletBulkEditForm(BootstrapMixin, AddRemoveTagsForm, BulkEditForm):
 
     class Meta:
         nullable_fields = [
-            'feed_leg', 'description',
+            'power_port', 'feed_leg', 'description', 
         ]
+
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        # Limit power_port choices to those on the parent device
+        if self.parent_obj is not None:
+            self.fields['power_port'].queryset = PowerPort.objects.filter(
+                device=self.parent_obj
+            )
+        else:
+            self.fields['power_port'].choices = []
 
 
 class PowerOutletBulkRenameForm(BulkRenameForm):
